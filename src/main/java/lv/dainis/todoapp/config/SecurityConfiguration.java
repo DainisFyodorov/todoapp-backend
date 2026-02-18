@@ -51,7 +51,10 @@ public class SecurityConfiguration {
                             response.getWriter().write("Invalid username or password");
                         })
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/"));
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/logout")
+                        .logoutSuccessUrl("/")
+                );
 
         return http.build();
     }
