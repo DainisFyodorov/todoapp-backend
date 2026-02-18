@@ -33,6 +33,23 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    public Task updateTask(Long id, Task taskDetails, String username) {
+        User user = userService.findByUsername(username);
+
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Task not found"));
+
+        if(!task.getUser().getId().equals(user.getId())) {
+            throw new RuntimeException("You can only edit your own tasks");
+        }
+
+        task.setTitle(taskDetails.getTitle());
+        task.setDescription(taskDetails.getDescription());
+        task.setCompleted(taskDetails.isCompleted());
+
+        return taskRepository.save(task);
+    }
+
     public void deleteTask(Long id, String username) {
         User user = userService.findByUsername(username);
 
