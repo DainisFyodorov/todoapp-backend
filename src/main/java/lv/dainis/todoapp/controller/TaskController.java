@@ -22,32 +22,20 @@ public class TaskController {
     }
 
     @GetMapping("/get")
-    public ResponseEntity<?> getAllTasks(Principal principal) {
-        try {
-            return ResponseEntity.ok().body(taskService.getAllTasksByUsername(principal.getName()));
-        } catch(RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<List<Task>> getAllTasks(Principal principal) {
+        return ResponseEntity.ok().body(taskService.getAllTasksByUsername(principal.getName()));
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createTask(@RequestBody Task task, Principal principal) {
-        try {
-            Task createdTask = taskService.createTask(task, principal.getName());
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
-        } catch(RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Task> createTask(@RequestBody Task task, Principal principal) {
+        Task createdTask = taskService.createTask(task, principal.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable Long id, Principal principal) {
-        try {
-            taskService.deleteTask(id, principal.getName());
-            return ResponseEntity.noContent().build();
-        } catch(RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteTask(@PathVariable Long id, Principal principal) {
+        taskService.deleteTask(id, principal.getName());
+        return ResponseEntity.noContent().build();
     }
 
 }
