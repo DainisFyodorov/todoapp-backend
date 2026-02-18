@@ -12,32 +12,29 @@ import java.util.List;
 @Service
 public class TaskService {
 
+    private final UserService userService;
+
     private final TaskRepository taskRepository;
-    private final UserRepository userRepository;
 
     @Autowired
-    public TaskService(TaskRepository taskRepository, UserRepository userRepository) {
+    public TaskService(UserService userService, TaskRepository taskRepository) {
+        this.userService = userService;
         this.taskRepository = taskRepository;
-        this.userRepository = userRepository;
     }
 
     public List<Task> getAllTasksByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userService.findByUsername(username);
         return taskRepository.findAllByUser(user);
     }
 
     public Task createTask(Task task, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        User user = userService.findByUsername(username);
         task.setUser(user);
         return taskRepository.save(task);
     }
 
     public void deleteTask(Long id, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+        User user = userService.findByUsername(username);
 
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
