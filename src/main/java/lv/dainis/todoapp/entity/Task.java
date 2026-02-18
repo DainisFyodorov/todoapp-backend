@@ -1,6 +1,9 @@
 package lv.dainis.todoapp.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 @Entity
@@ -13,8 +16,14 @@ public class Task {
     @Column(name = "id")
     private Long id;
 
+    @NotBlank
+    @Size(min = 3, max = 30, message = "Title length must be between 3 and 30 characters")
     private String title;
+
+    @NotNull
     private String description;
+
+    @NotNull
     private boolean completed;
 
     @ManyToOne(fetch = FetchType.LAZY)

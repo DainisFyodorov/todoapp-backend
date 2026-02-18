@@ -1,5 +1,6 @@
 package lv.dainis.todoapp.controller;
 
+import jakarta.validation.Valid;
 import lv.dainis.todoapp.entity.Task;
 import lv.dainis.todoapp.service.TaskService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,13 +28,13 @@ public class TaskController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Task> createTask(@RequestBody Task task, Principal principal) {
+    public ResponseEntity<Task> createTask(@Valid  @RequestBody Task task, Principal principal) {
         Task createdTask = taskService.createTask(task, principal.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task task, Principal principal) {
+    public ResponseEntity<Task> updateTask(@PathVariable Long id, @Valid @RequestBody Task task, Principal principal) {
         Task updatedTask = taskService.updateTask(id, task, principal.getName());
         return ResponseEntity.ok(updatedTask);
     }
