@@ -1,5 +1,6 @@
 package lv.dainis.todoapp.controller;
 
+import jakarta.validation.Valid;
 import lv.dainis.todoapp.entity.User;
 import lv.dainis.todoapp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody User user) {
+    public ResponseEntity<Void> register(@Valid @RequestBody User user) {
         userService.registerUser(user);
         return ResponseEntity.ok().build();
     }
