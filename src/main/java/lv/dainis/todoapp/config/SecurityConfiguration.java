@@ -31,6 +31,10 @@ public class SecurityConfiguration {
                         .successHandler((request, response, authentication) -> {
                             response.setStatus(200);
                         })
+                        .failureHandler((request, response, exception) -> {
+                            response.setStatus(401);
+                            response.getWriter().write("Invalid username or password");
+                        })
                 )
                 .logout(logout -> logout.logoutSuccessUrl("/"));
 
