@@ -27,6 +27,13 @@ public class SecurityConfiguration {
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                // Handling access exceptions
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(401);
+                            response.getWriter().write("Unauthorized");
+                        })
+                )
                 // Login configuration
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/auth/login")
