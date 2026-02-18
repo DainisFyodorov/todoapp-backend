@@ -24,10 +24,13 @@ public class SecurityConfiguration {
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // Login configuration
                 .formLogin(form -> form
+                        .loginProcessingUrl("/api/auth/login")
+
                         .successHandler((request, response, authentication) -> {
                             response.setStatus(200);
                         })
