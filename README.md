@@ -19,6 +19,7 @@ The backend is implemented using Java and Spring Boot and exposes REST APIs cons
 - REST APIs
 - Lombok
 - Maven
+- Docker, Docker Compose
 
 ## Main Features
 - User Authentication: registration and authentication with data validation
@@ -42,6 +43,28 @@ API will be available on the following URL: ```http://localhost:8080/```<br>
 H2 database console (for debugging): ```http://localhost:8080/h2-console```
 
 **Notice:** for full web application functionality, don't forget to configure and run [the frontend part of the application](https://github.com/DainisFyodorov/todoapp-frontend).
+
+## Run with Docker
+The easiest way to run the entire stack (Backend + Frontend) is using Docker Compose.
+
+1. Clone both repositories into the same parent folder:
+```bash
+git clone https://github.com/DainisFyodorov/todoapp-backend
+git clone https://github.com/DainisFyodorov/todoapp-frontend
+```
+2. Navigate to the frontend directory and create `.env` file based on `.env.example`
+3. Go back to the parent folder and navigate to the backend directory:
+```
+cd todoapp-backend
+```
+4. Run the following command:
+```
+docker-compose up --build
+```
+After the containers start:
+- Backend API: `http://localhost:8080`
+- Frontend API: `http://localhost:3000`
+- H2 Console: `http://localhost:8080/h2-console`
 
 ## Architecture
 Application follows multi-layer architecture:
