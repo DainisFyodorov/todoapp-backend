@@ -29,7 +29,7 @@ The backend is implemented using Java and Spring Boot and exposes REST APIs cons
 ## Installation
 1. Make sure that you have **JDK 21** and **Maven** installed
 2. Clone the repository
-3. Configure database connection in `application.properties` file
+3. Configure database connection and allowed origins in `application.properties` file
 4. Build the project using:
 ```
 mvn clean install
