@@ -1,5 +1,6 @@
 package lv.dainis.todoapp.config;
 
+import lv.dainis.todoapp.responsemodel.ErrorResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -13,6 +14,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -48,7 +50,13 @@ public class SecurityConfiguration {
                         })
                         .failureHandler((request, response, exception) -> {
                             response.setStatus(401);
-                            response.getWriter().write("Invalid username or password");
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+
+                            ErrorResponse error = new ErrorResponse("Invalid username or password");
+
+                            String json = new ObjectMapper().writeValueAsString(error);
+                            response.getWriter().write(json);
                         })
                 )
                 .logout(logout -> logout
