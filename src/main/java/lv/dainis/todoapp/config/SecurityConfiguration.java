@@ -38,7 +38,13 @@ public class SecurityConfiguration {
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint((request, response, authException) -> {
                             response.setStatus(401);
-                            response.getWriter().write("Unauthorized");
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+
+                            ErrorResponse error = new ErrorResponse("Unauthorized");
+
+                            String json = new ObjectMapper().writeValueAsString(error);
+                            response.getWriter().write(json);
                         })
                 )
                 // Login configuration
