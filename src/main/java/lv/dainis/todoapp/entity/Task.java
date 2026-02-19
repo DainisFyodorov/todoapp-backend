@@ -1,5 +1,6 @@
 package lv.dainis.todoapp.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -16,7 +17,6 @@ public class Task {
     @Column(name = "id")
     private Long id;
 
-    @NotBlank
     @Size(min = 3, max = 30, message = "Title length must be between 3 and 30 characters")
     private String title;
 
@@ -28,5 +28,6 @@ public class Task {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 }
