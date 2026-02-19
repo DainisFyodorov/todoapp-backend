@@ -162,7 +162,7 @@ public class TaskServiceTest {
         task.setId(2L);
 
         when(userService.findByUsername(username)).thenReturn(user);
-        when(taskRepository.findById(taskId)).thenThrow(new RuntimeException("Task not found"));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> taskService.updateTask(taskId, task, username));
 
@@ -248,7 +248,7 @@ public class TaskServiceTest {
         user.setId(1L);
 
         when(userService.findByUsername(username)).thenReturn(user);
-        when(taskRepository.findById(taskId)).thenThrow(new RuntimeException("Task not found"));
+        when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
 
         assertThrows(RuntimeException.class, () -> taskService.deleteTask(taskId, username));
         verify(taskRepository, never()).delete(any());
