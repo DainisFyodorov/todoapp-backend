@@ -1,7 +1,7 @@
 # Move this file to a common directory where folders todoapp-backend and todoapp-frontend are located
 services:
   backend:
-    build: ./todoapp-backend
+    build: ./
     ports:
       - "8080:8080"
     environment:
