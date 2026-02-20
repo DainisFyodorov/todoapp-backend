@@ -30,4 +30,8 @@ public class Task {
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
+
+    public void setTitle(String title) {
+        this.title = title.trim();
+    }
 }
