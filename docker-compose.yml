@@ -1,4 +1,3 @@
-# Move this file to a common directory where folders todoapp-backend and todoapp-frontend are located
 services:
   backend:
     build: ./
