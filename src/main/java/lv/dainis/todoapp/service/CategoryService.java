@@ -81,6 +81,5 @@ public class CategoryService {
         }
 
         categoryRepository.delete(category);
-        user.getCategories().remove(category);
     }
 }
