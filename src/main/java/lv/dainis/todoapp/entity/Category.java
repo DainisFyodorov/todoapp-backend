@@ -3,7 +3,7 @@ package lv.dainis.todoapp.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.util.List;
@@ -18,12 +18,13 @@ public class Category {
     @Column(name = "id")
     private Long id;
 
-    @Size(min = 3, max = 30, message = "Category name length must be between 3 and 30 characters")
+    @NotBlank
     @Column(name = "name")
     private String name;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
+    @JsonIgnore
     private User user;
 
     @OneToMany(mappedBy = "category")
