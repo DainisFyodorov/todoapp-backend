@@ -2,8 +2,11 @@ package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.TaskRepository;
 import lv.dainis.todoapp.dao.UserRepository;
+import lv.dainis.todoapp.entity.Category;
 import lv.dainis.todoapp.entity.Task;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
+import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +28,9 @@ public class TaskServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private CategoryService categoryService;
 
     @InjectMocks
     private TaskService taskService;
@@ -63,32 +69,68 @@ public class TaskServiceTest {
     @Test
     void createTaskSuccess() {
         String username = "Dainis";
+        Long categoryId = 1L;
+        Long createdId = 100L;
 
-        Task task = new Task();
-        task.setId(1L);
-        task.setTitle("Test title");
-        task.setDescription("Test description");
+        TaskRequestDTO requestDTO = new TaskRequestDTO();
+        requestDTO.setTitle("Test title");
+        requestDTO.setDescription("Test description");
+        requestDTO.setCategoryId(categoryId);
 
         User user = new User();
         user.setUsername(username);
 
+        Category category = new Category();
+        category.setId(categoryId);
+
         when(userService.findByUsername(username)).thenReturn(user);
-        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
+        when(categoryService.findById(eq(categoryId))).thenReturn(category);
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> {
+            Task savedTask = i.getArgument(0);
+            savedTask.setId(createdId);
+            return savedTask;
+        });
 
-        Task createdTask = taskService.createTask(task, username);
+        TaskResponseDTO createdTask = taskService.createTask(requestDTO, username);
+
         assertNotNull(createdTask);
-        assertEquals(username, createdTask.getUser().getUsername());
+        assertEquals(createdId, createdTask.getId());
+        assertEquals(requestDTO.getTitle(), createdTask.getTitle());
+        assertEquals(requestDTO.getDescription(), createdTask.getDescription());
+        assertEquals(categoryId, createdTask.getCategoryId());
 
-        verify(taskRepository, times(1)).save(task);
+        verify(taskRepository).save(argThat(task ->
+                task.getUser().equals(user) &&
+                task.getCategory().equals(category) &&
+                task.getTitle().equals(requestDTO.getTitle())));
     }
 
     @DisplayName("Create task (user not found)")
     @Test
     void createTaskUserNotFound() {
         String username = "Dainis";
-        Task task = new Task();
+        TaskRequestDTO task = new TaskRequestDTO();
 
         when(userService.findByUsername(username)).thenThrow(new RuntimeException("User not found"));
+
+        assertThrows(RuntimeException.class, () -> taskService.createTask(task, username));
+
+        verify(taskRepository, never()).save(any());
+    }
+
+    @DisplayName("Create task (category not found)")
+    @Test
+    void createTaskCategoryNotFound() {
+        String username = "Dainis";
+        Long categoryId = 1L;
+
+        TaskRequestDTO task = new TaskRequestDTO();
+        task.setCategoryId(categoryId);
+
+        User user = new User();
+
+        when(userService.findByUsername(username)).thenReturn(user);
+        when(categoryService.findById(categoryId)).thenThrow(new RuntimeException("Category not found"));
 
         assertThrows(RuntimeException.class, () -> taskService.createTask(task, username));
 
@@ -100,10 +142,14 @@ public class TaskServiceTest {
     void updateTaskSuccessTest() {
         String username = "Dainis";
         Long taskId = 1L;
+        Long categoryId = 2L;
 
         User user = new User();
         user.setUsername(username);
         user.setId(1L);
+
+        Category category = new Category();
+        category.setId(categoryId);
 
         Task existingTask = new Task();
         existingTask.setId(taskId);
@@ -111,24 +157,31 @@ public class TaskServiceTest {
         existingTask.setDescription("Description before");
         existingTask.setCompleted(false);
         existingTask.setUser(user);
+        existingTask.setCategory(null);
 
-        Task taskDetails = new Task();
-        taskDetails.setId(taskId);
+        TaskRequestDTO taskDetails = new TaskRequestDTO();
         taskDetails.setTitle("Title after");
         taskDetails.setDescription("Description after");
         taskDetails.setCompleted(true);
+        taskDetails.setCategoryId(categoryId);
 
         when(userService.findByUsername(username)).thenReturn(user);
+        when(categoryService.findById(categoryId)).thenReturn(category);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
-        when(taskRepository.save(any(Task.class))).thenAnswer(i -> i.getArgument(0));
+        when(taskRepository.save(any(Task.class))).thenAnswer(i -> {
+            Task updated = i.getArgument(0);
+            updated.setId(taskId);
+            return updated;
+        });
 
-        Task updatedTask = taskService.updateTask(taskId, taskDetails, username);
+        TaskResponseDTO updatedTask = taskService.updateTask(taskId, taskDetails, username);
 
         assertNotNull(updatedTask);
+        assertEquals(taskId, updatedTask.getId());
         assertEquals("Title after", updatedTask.getTitle());
         assertEquals("Description after", updatedTask.getDescription());
         assertTrue(updatedTask.isCompleted());
-        assertEquals(user, updatedTask.getUser());
+        assertEquals(categoryId, updatedTask.getCategoryId());
 
         verify(taskRepository, times(1)).save(existingTask);
     }
@@ -139,8 +192,7 @@ public class TaskServiceTest {
         String username = "Dainis";
         Long taskId = 1L;
 
-        Task task = new Task();
-        task.setId(taskId);
+        TaskRequestDTO task = new TaskRequestDTO();
 
         when(userService.findByUsername(username)).thenThrow(new RuntimeException("User not found"));
 
@@ -158,8 +210,7 @@ public class TaskServiceTest {
         User user = new User();
         user.setId(1L);
 
-        Task task = new Task();
-        task.setId(2L);
+        TaskRequestDTO task = new TaskRequestDTO();
 
         when(userService.findByUsername(username)).thenReturn(user);
         when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
@@ -184,17 +235,9 @@ public class TaskServiceTest {
         taskOwner.setId(2L);
 
         Task existingTask = new Task();
-        existingTask.setId(taskId);
-        existingTask.setTitle("Title before");
-        existingTask.setDescription("Description before");
-        existingTask.setCompleted(false);
         existingTask.setUser(taskOwner);
 
-        Task taskDetails = new Task();
-        taskDetails.setId(taskId);
-        taskDetails.setTitle("Title after");
-        taskDetails.setDescription("Description after");
-        taskDetails.setCompleted(true);
+        TaskRequestDTO taskDetails = new TaskRequestDTO();
 
         when(userService.findByUsername(username)).thenReturn(user);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(existingTask));
