@@ -238,4 +238,51 @@ public class CategoryControllerTest {
     }
 
     //endregion
+
+    //region deleteCategory
+
+    @Test
+    @DisplayName("Delete category (success 200 OK)")
+    @WithMockUser(username = "Dainis")
+    void deleteCategorySuccessTest() throws Exception {
+        String username = "Dainis";
+        Long categoryId = 1L;
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
+                .with(csrf()))
+                .andExpect(status().isNoContent());
+
+        verify(categoryService, times(1)).deleteCategory(eq(categoryId), eq(username));
+    }
+
+    @Test
+    @DisplayName("Delete category (unauthorized)")
+    void deleteCategoryUnauthorizedTest() throws Exception {
+        String username = "Dainis";
+        Long categoryId = 1L;
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
+                .with(csrf()))
+                .andExpect(status().isUnauthorized());
+
+        verify(categoryService, never()).deleteCategory(any(), any());
+    }
+
+    @Test
+    @DisplayName("Delete category (user is not the owner)")
+    @WithMockUser(username = "Dainis")
+    void deleteCategoryWhenUserIsNotTheOwnerTest() throws Exception {
+        String username = "Dainis";
+        Long categoryId = 1L;
+
+        doThrow(new RuntimeException("You can delete only your own tasks"))
+                .when(categoryService).deleteCategory(eq(categoryId), eq(username));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
+                .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("You can delete only your own tasks"));
+    }
+
+    //endregion
 }
