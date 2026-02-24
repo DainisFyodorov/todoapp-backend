@@ -30,6 +30,32 @@ public class CategoryServiceTest {
     @InjectMocks
     private CategoryService categoryService;
 
+    //region findById
+
+    @Test
+    @DisplayName("Find by id (success)")
+    void findByIdSuccessTest() {
+        Long categoryId = 3L;
+
+        Category category = new Category();
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+        assertEquals(category, categoryService.findById(categoryId));
+    }
+
+    @Test
+    @DisplayName("Find by id (not found)")
+    void findByIdNotFoundTest() {
+        Long categoryId = 3L;
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+
+        Exception exception = assertThrows(RuntimeException.class, () -> categoryService.findById(categoryId));
+        assertEquals("Category not found", exception.getMessage());
+    }
+
+    //endregion
+
     //region getAllCategoriesByUsername
     @Test
     @DisplayName("Get all user's categories (success)")

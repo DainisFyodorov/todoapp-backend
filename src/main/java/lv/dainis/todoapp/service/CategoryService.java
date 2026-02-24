@@ -24,6 +24,10 @@ public class CategoryService {
         this.categoryRepository = categoryRepository;
     }
 
+    public Category findById(Long categoryId) {
+        return categoryRepository.findById(categoryId).orElseThrow(() -> new RuntimeException("Category not found"));
+    }
+
     public List<CategoryResponseDTO> getAllCategoriesByUsername(String username) {
         User user = userService.findByUsername(username);
         return categoryRepository.findAllByUser(user).stream().map(category -> {
