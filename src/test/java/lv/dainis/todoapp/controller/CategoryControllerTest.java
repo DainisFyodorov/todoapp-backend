@@ -258,10 +258,7 @@ public class CategoryControllerTest {
     @Test
     @DisplayName("Delete category (unauthorized)")
     void deleteCategoryUnauthorizedTest() throws Exception {
-        String username = "Dainis";
-        Long categoryId = 1L;
-
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/1")
                 .with(csrf()))
                 .andExpect(status().isUnauthorized());
 
