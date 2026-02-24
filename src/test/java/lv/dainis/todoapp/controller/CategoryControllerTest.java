@@ -155,4 +155,87 @@ public class CategoryControllerTest {
     }
 
     //endregion
+
+    //region updateCategory
+
+    @Test
+    @DisplayName("Update category (success 200 OK)")
+    @WithMockUser(username = "Dainis")
+    void updateCategorySuccessTest() throws Exception {
+        String username = "Dainis";
+        Long categoryId = 1L;
+
+        CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
+        categoryDTO.setName("Category name");
+
+        CategoryResponseDTO responseDTO = new CategoryResponseDTO();
+        responseDTO.setId(categoryId);
+        responseDTO.setName("Category name");
+
+        when(categoryService.updateCategory(categoryId, categoryDTO, username)).thenReturn(responseDTO);
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/category/" + categoryId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryDTO))
+                .with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(categoryId))
+                .andExpect(jsonPath("$.name").value(categoryDTO.getName()));
+
+        verify(categoryService, times(1)).updateCategory(eq(categoryId), eq(categoryDTO), eq(username));
+    }
+
+    @Test
+    @DisplayName("Update category (validation failure bad request)")
+    @WithMockUser(username = "Dainis")
+    void updateCategoryValidationFailureTest() throws Exception {
+        Long categoryId = 1L;
+
+        CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
+        categoryDTO.setName("");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/category/" + categoryId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryDTO))
+                .with(csrf()))
+                .andExpect(status().isBadRequest());
+
+        verify(categoryService, never()).updateCategory(eq(categoryId), eq(categoryDTO), any());
+    }
+
+    @Test
+    @DisplayName("Update category (unauthorized)")
+    void updateCategoryUnauthorizedTest() throws Exception {
+        CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
+        categoryDTO.setName("");
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/category/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryDTO))
+                .with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @DisplayName("Update category (user is not the owner 400 bad request)")
+    @WithMockUser(username = "Dainis")
+    void updateCategoryWhenUserIsNotTheOwnerTest() throws Exception {
+        String username = "Dainis";
+        Long categoryId = 1L;
+
+        CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
+        categoryRequestDTO.setName("123456");
+
+        when(categoryService.updateCategory(eq(categoryId), eq(categoryRequestDTO), eq(username))).thenThrow(
+                new RuntimeException("You can only edit your own categories"));
+
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/category/" + categoryId)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryRequestDTO))
+                .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("You can only edit your own categories"));
+    }
+
+    //endregion
 }
