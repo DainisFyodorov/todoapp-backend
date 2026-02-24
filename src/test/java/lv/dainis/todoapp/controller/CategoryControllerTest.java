@@ -1,6 +1,7 @@
 package lv.dainis.todoapp.controller;
 
 import lv.dainis.todoapp.entity.Category;
+import lv.dainis.todoapp.requestmodel.CategoryRequestDTO;
 import lv.dainis.todoapp.responsemodel.CategoryResponseDTO;
 import lv.dainis.todoapp.service.CategoryService;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CategoryController.class)
@@ -94,6 +96,61 @@ public class CategoryControllerTest {
     @DisplayName("Get all categories (unauthorized)")
     void getAllUserCategoriesUnauthorized() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/api/category"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    //endregion
+
+    //region createCategory
+
+    @Test
+    @DisplayName("Create category (success 200 OK)")
+    @WithMockUser(username = "Dainis")
+    void createCategorySuccessTest() throws Exception {
+        String username = "Dainis";
+
+        CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
+        categoryDTO.setName("Test category");
+
+        CategoryResponseDTO responseDTO = new CategoryResponseDTO();
+        responseDTO.setId(1L);
+        responseDTO.setName(categoryDTO.getName());
+
+        when(categoryService.createCategory(any(CategoryRequestDTO.class), eq(username))).thenReturn(responseDTO);
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryDTO))
+                .with(csrf()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(responseDTO.getId()))
+                .andExpect(jsonPath("$.name").value(categoryDTO.getName()));
+    }
+
+    @Test
+    @DisplayName("Create category (validation failure 400 bad request)")
+    @WithMockUser(username = "Dainis")
+    void createCategoryValidationFailureTest() throws Exception {
+        CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
+        categoryDTO.setName("");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryDTO))
+                .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Create category (unauthorized)")
+    void createCategoryUnauthorizedTest() throws Exception {
+        CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
+        categoryDTO.setName("123456");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/api/category")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(categoryDTO))
+                .with(csrf()))
                 .andExpect(status().isUnauthorized());
     }
 
