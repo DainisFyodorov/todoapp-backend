@@ -1,12 +1,14 @@
 package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.CategoryRepository;
+import lv.dainis.todoapp.dao.TaskRepository;
 import lv.dainis.todoapp.entity.Category;
 import lv.dainis.todoapp.entity.User;
 import lv.dainis.todoapp.requestmodel.CategoryRequestDTO;
 import lv.dainis.todoapp.responsemodel.CategoryResponseDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -17,11 +19,15 @@ public class CategoryService {
     private final UserService userService;
 
     private final CategoryRepository categoryRepository;
+    private final TaskRepository taskRepository;
 
     @Autowired
-    public CategoryService(UserService userService, CategoryRepository categoryRepository) {
+    public CategoryService(UserService userService,
+                           CategoryRepository categoryRepository,
+                           TaskRepository taskRepository) {
         this.userService = userService;
         this.categoryRepository = categoryRepository;
+        this.taskRepository = taskRepository;
     }
 
     public Category findById(Long categoryId) {
@@ -74,6 +80,7 @@ public class CategoryService {
         return categoryResponseDTO;
     }
 
+    @Transactional
     public void deleteCategory(Long categoryId, String username) {
         User user = userService.findByUsername(username);
 
@@ -84,6 +91,7 @@ public class CategoryService {
             throw new RuntimeException("You can delete only your own categories");
         }
 
+        taskRepository.clearTasksFromCategory(categoryId);
         categoryRepository.delete(category);
     }
 }
