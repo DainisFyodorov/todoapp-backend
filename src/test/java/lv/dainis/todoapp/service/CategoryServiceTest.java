@@ -1,7 +1,9 @@
 package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.CategoryRepository;
+import lv.dainis.todoapp.dao.TaskRepository;
 import lv.dainis.todoapp.entity.Category;
+import lv.dainis.todoapp.entity.Task;
 import lv.dainis.todoapp.entity.User;
 import lv.dainis.todoapp.requestmodel.CategoryRequestDTO;
 import lv.dainis.todoapp.responsemodel.CategoryResponseDTO;
@@ -23,6 +25,9 @@ public class CategoryServiceTest {
 
     @Mock
     private CategoryRepository categoryRepository;
+
+    @Mock
+    private TaskRepository taskRepository;
 
     @Mock
     private UserService userService;
@@ -239,11 +244,21 @@ public class CategoryServiceTest {
         Category existingCategory = new Category();
         existingCategory.setUser(user);
 
+        Task existingTask = new Task();
+        existingTask.setCategory(existingCategory);
+
         when(userService.findByUsername(username)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(existingCategory));
+        doAnswer(i -> {
+            existingTask.setCategory(null);
+            return null;
+        }).when(taskRepository).clearTasksFromCategory(eq(categoryId));
 
         categoryService.deleteCategory(categoryId, username);
 
+        assertNull(existingTask.getCategory());
+
+        verify(taskRepository, times(1)).clearTasksFromCategory(eq(categoryId));
         verify(categoryRepository, times(1)).delete(existingCategory);
     }
 
