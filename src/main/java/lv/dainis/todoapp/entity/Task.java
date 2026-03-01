@@ -2,10 +2,10 @@ package lv.dainis.todoapp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
+import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
 
 @Entity
 @Table(name = "task")
@@ -17,7 +17,7 @@ public class Task {
     @Column(name = "id")
     private Long id;
 
-    @Size(min = 3, max = 30, message = "Title length must be between 3 and 30 characters")
+    @NotNull
     private String title;
 
     @NotNull
@@ -27,11 +27,34 @@ public class Task {
     private boolean completed;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    @JsonIgnore
+    private Category category;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 
-    public void setTitle(String title) {
-        this.title = title.trim();
+    public TaskResponseDTO toDTO() {
+        TaskResponseDTO dto = new TaskResponseDTO();
+        dto.setId(this.id);
+        dto.setTitle(this.title);
+        dto.setDescription(this.description);
+        dto.setCompleted(this.completed);
+        dto.setCategoryId(this.category != null ? this.category.getId() : null);
+
+        return dto;
+    }
+
+    public static Task fromDTO(TaskRequestDTO dto, User user, Category category) {
+        Task task = new Task();
+        task.setTitle(dto.getTitle());
+        task.setDescription(dto.getDescription());
+        task.setCompleted(dto.isCompleted());
+        task.setUser(user);
+        task.setCategory(category);
+
+        return task;
     }
 }

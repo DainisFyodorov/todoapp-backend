@@ -73,14 +73,18 @@ Application follows multi-layer architecture:
 3. Repository Layer: Database abstraction via Spring Data JPA
 
 ## Endpoints
-| Method        | Endpoint      | Description   | Access        |
-| ------------- | ------------- | ------------- | ------------- |
-| POST          | ```/api/auth/register```  | New account registration  | Public  |
-| POST          | ```/api/auth/login```     | Authentication            | Public  |
-| GET           | ```/api/task/get```       | Get list of tasks         | Secured |
-| POST          | ```/api/task/add```       | Create a new task         | Secured |
-| PUT           | ```/api/task/update/{id}```       | Update task       | Secured |
-| DELETE          | ```/api/task/delete/{id}```     | Delete task       | Secured |
+| Method | Endpoint                    | Description              | Access  |
+|--------|-----------------------------|--------------------------|---------|
+| POST   | ```/api/auth/register```    | New account registration | Public  |
+| POST   | ```/api/auth/login```       | Authentication           | Public  |
+| GET    | ```/api/task/get```         | Get list of tasks        | Secured |
+| POST   | ```/api/task/add```         | Create a new task        | Secured |
+| PUT    | ```/api/task/update/{id}``` | Update task              | Secured |
+| DELETE | ```/api/task/delete/{id}``` | Delete task              | Secured |
+| GET    | ```/api/category```         | Get list of categories   | Secured |
+| POST   | ```/api/category```         | Create a new category    | Secured |
+| PUT    | ```/api/category/{id}```    | Update category          | Secured |
+| DELETE | ```/api/category/{id}```    | Delete category          | Secured |
 
 ## Status
 In active development.

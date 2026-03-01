@@ -1,8 +1,8 @@
 package lv.dainis.todoapp.controller;
 
-import lv.dainis.todoapp.dao.TaskRepository;
-import lv.dainis.todoapp.entity.Task;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
+import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
 import lv.dainis.todoapp.service.TaskService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -42,14 +42,11 @@ public class TaskControllerTest {
         User user = new User();
         user.setUsername(username);
 
-        Task taskOne = new Task();
-        Task taskTwo = new Task();
+        TaskResponseDTO taskOne = new TaskResponseDTO();
+        TaskResponseDTO taskTwo = new TaskResponseDTO();
 
         taskOne.setTitle("Task 1");
         taskTwo.setTitle("Task 2");
-
-        taskOne.setUser(user);
-        taskTwo.setUser(user);
 
         when(taskService.getAllTasksByUsername(username)).thenReturn(List.of(taskOne, taskTwo));
 
@@ -99,28 +96,40 @@ public class TaskControllerTest {
     @Test
     @WithMockUser(username = "Dainis")
     void createTaskTest() throws Exception {
-        Task task = new Task();
+        Long createdId = 1L;
+
+        TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task");
         task.setDescription("Description");
         task.setCompleted(false);
+        task.setCategoryId(null);
 
-        when(taskService.createTask(any(Task.class), eq("Dainis"))).thenReturn(task);
+        TaskResponseDTO responseDTO = new TaskResponseDTO();
+        responseDTO.setId(createdId);
+        responseDTO.setTitle("Task");
+        responseDTO.setDescription("Description");
+        responseDTO.setCompleted(false);
+        responseDTO.setCategoryId(null);
+
+        when(taskService.createTask(any(TaskRequestDTO.class), eq("Dainis"))).thenReturn(responseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/task/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(task))
                 .with(csrf()))
                 .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.id").value(createdId))
                 .andExpect(jsonPath("$.title").value(task.getTitle()))
                 .andExpect(jsonPath("$.description").value(task.getDescription()))
-                .andExpect(jsonPath("$.completed").value(task.isCompleted()));
+                .andExpect(jsonPath("$.completed").value(task.isCompleted()))
+                .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
     }
 
     @DisplayName("Create task endpoint (validation failure 400 bad request)")
     @Test
     @WithMockUser(username = "Dainis")
     void createTaskValidationFailureTest() throws Exception {
-        Task task = new Task();
+        TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("");
         task.setDescription("");
 
@@ -134,7 +143,7 @@ public class TaskControllerTest {
     @DisplayName("Create task endpoint (user not logged in 401)")
     @Test
     void createTaskNotLoggedInTest() throws Exception {
-        Task task = new Task();
+        TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task title");
         task.setDescription("Task description");
 
@@ -152,13 +161,19 @@ public class TaskControllerTest {
         Long taskId = 1L;
         String username = "Dainis";
 
-        Task task = new Task();
-        task.setId(1L);
+        TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Title");
         task.setDescription("Description");
         task.setCompleted(true);
+        task.setCategoryId(null);
 
-        when(taskService.updateTask(eq(taskId), any(Task.class), eq(username))).thenReturn(task);
+        TaskResponseDTO response = new TaskResponseDTO();
+        response.setTitle("Title");
+        response.setDescription("Description");
+        response.setCompleted(true);
+        response.setCategoryId(null);
+
+        when(taskService.updateTask(eq(taskId), eq(task), eq(username))).thenReturn(response);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/" + taskId)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -167,16 +182,17 @@ public class TaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value(task.getTitle()))
                 .andExpect(jsonPath("$.description").value(task.getDescription()))
-                .andExpect(jsonPath("$.completed").value(true));
+                .andExpect(jsonPath("$.completed").value(task.isCompleted()))
+                .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
 
-        verify(taskService, times(1)).updateTask(eq(taskId), any(Task.class), eq(username));
+        verify(taskService, times(1)).updateTask(eq(taskId), eq(task), eq(username));
     }
 
     @DisplayName("Update task endpoint (validation failure 400 bad request)")
     @Test
     @WithMockUser(username = "Dainis")
     void updateTaskValidationFailureTest() throws Exception {
-        Task invalidTask = new Task();
+        TaskRequestDTO invalidTask = new TaskRequestDTO();
         invalidTask.setTitle("");
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/1")
@@ -189,7 +205,7 @@ public class TaskControllerTest {
     @DisplayName("Update task endpoint (unauthorized 401)")
     @Test
     void updateTaskUnauthorizedTest() throws Exception {
-        Task task = new Task();
+        TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task title");
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/1")
@@ -206,12 +222,11 @@ public class TaskControllerTest {
         String username = "Dainis";
         Long taskId = 1L;
 
-        Task task = new Task();
-        task.setId(taskId);
+        TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task title");
         task.setDescription("");
 
-        when(taskService.updateTask(eq(taskId), any(Task.class), eq(username)))
+        when(taskService.updateTask(eq(taskId), eq(task), eq(username)))
                 .thenThrow(new RuntimeException("You can only edit your own tasks"));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/" + taskId)
