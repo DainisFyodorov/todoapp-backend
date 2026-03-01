@@ -1,6 +1,8 @@
 package lv.dainis.todoapp.config;
 
 import lv.dainis.todoapp.responsemodel.ErrorResponse;
+import lv.dainis.todoapp.service.CustomOAuth2UserService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +28,13 @@ public class SecurityConfiguration {
     // Reading values, if no then default value: http://localhost:3000
     @Value("${app.cors.allowed-origins:http://localhost:3000}")
     private List<String> allowedOrigins;
+
+    private final CustomOAuth2UserService customOAuth2UserService;
+
+    @Autowired
+    public SecurityConfiguration(CustomOAuth2UserService customOAuth2UserService) {
+        this.customOAuth2UserService = customOAuth2UserService;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -68,6 +77,14 @@ public class SecurityConfiguration {
 
                             String json = new ObjectMapper().writeValueAsString(error);
                             response.getWriter().write(json);
+                        })
+                )
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler((request, response, authentication) -> {
+                            response.setStatus(200);
                         })
                 )
                 .logout(logout -> logout
