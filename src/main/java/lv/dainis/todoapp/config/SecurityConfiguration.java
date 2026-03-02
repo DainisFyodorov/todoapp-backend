@@ -85,6 +85,7 @@ public class SecurityConfiguration {
                         )
                         .successHandler((request, response, authentication) -> {
                             response.setStatus(200);
+                            response.sendRedirect(allowedOrigins.getFirst());
                         })
                 )
                 .logout(logout -> logout
