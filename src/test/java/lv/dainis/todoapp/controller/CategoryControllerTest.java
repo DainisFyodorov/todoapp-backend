@@ -1,13 +1,15 @@
 package lv.dainis.todoapp.controller;
 
-import lv.dainis.todoapp.entity.Category;
+import lv.dainis.todoapp.config.SecurityConfiguration;
 import lv.dainis.todoapp.requestmodel.CategoryRequestDTO;
 import lv.dainis.todoapp.responsemodel.CategoryResponseDTO;
 import lv.dainis.todoapp.service.CategoryService;
+import lv.dainis.todoapp.service.CustomOAuth2UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -23,6 +25,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CategoryController.class)
+@Import(SecurityConfiguration.class)
 public class CategoryControllerTest {
 
     @Autowired
@@ -33,6 +36,9 @@ public class CategoryControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private CustomOAuth2UserService customOAuth2UserService;
 
     //region getAllCategoriesByUsername
 
