@@ -64,4 +64,32 @@ public class CustomOAuth2UserServiceTest {
 
         verify(userRepository, times(1)).save(any(User.class));
     }
+
+    @Test
+    void existingUserTest() {
+        String email = "dainis@gmail.com";
+        Map<String, Object> attributes = Map.of("email", email);
+        OAuth2User mockOAuth2User = new DefaultOAuth2User(
+                Collections.singleton(new SimpleGrantedAuthority("USER")),
+                attributes,
+                "email"
+        );
+
+        when(defaultOAuth2UserService.loadUser(oAuth2UserRequest))
+                .thenReturn(mockOAuth2User);
+
+        User existingUser = new User();
+        existingUser.setUsername(email);
+
+        when(userRepository.findByUsername(email)).thenReturn(Optional.of(existingUser));
+
+        OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
+
+        assertNotNull(result);
+        assertEquals(email, result.getAttribute("email"));
+        assertTrue(result.getAuthorities().stream()
+                .anyMatch(a -> Objects.equals(a.getAuthority(), "USER")));
+
+        verify(userRepository, never()).save(any(User.class));
+    }
 }
