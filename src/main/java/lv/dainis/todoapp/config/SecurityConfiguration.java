@@ -46,7 +46,7 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/oauth2/authorization/**").permitAll()
+                        .requestMatchers("/oauth2/authorization/**", "/login/oauth2/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // Handling access exceptions
@@ -81,6 +81,7 @@ public class SecurityConfiguration {
                         })
                 )
                 .oauth2Login(oauth2 -> oauth2
+                        .defaultSuccessUrl(allowedOrigins.getFirst())
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
