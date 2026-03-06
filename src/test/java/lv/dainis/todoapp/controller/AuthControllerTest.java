@@ -1,12 +1,14 @@
 package lv.dainis.todoapp.controller;
 
+import lv.dainis.todoapp.config.SecurityConfiguration;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.service.CustomOAuth2UserService;
 import lv.dainis.todoapp.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,7 +23,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false)
+@Import(SecurityConfiguration.class)
 public class AuthControllerTest {
 
     @Autowired
@@ -32,6 +34,9 @@ public class AuthControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    private CustomOAuth2UserService customOAuth2UserService;
 
     @DisplayName("Registration endpoint (success - 200 OK)")
     @Test
