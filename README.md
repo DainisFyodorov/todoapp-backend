@@ -77,6 +77,7 @@ Application follows multi-layer architecture:
 |--------|-----------------------------|--------------------------|---------|
 | POST   | ```/api/auth/register```    | New account registration | Public  |
 | POST   | ```/api/auth/login```       | Authentication           | Public  |
+| POST   | ```/api/auth/me```          | Get user information     | Public  |
 | GET    | ```/api/task/get```         | Get list of tasks        | Secured |
 | POST   | ```/api/task/add```         | Create a new task        | Secured |
 | PUT    | ```/api/task/update/{id}``` | Update task              | Secured |
