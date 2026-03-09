@@ -2,12 +2,15 @@ package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.UserRepository;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.responsemodel.UserInfoResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -87,5 +90,34 @@ public class UserServiceTest {
 
         assertEquals("Username is already taken", exception.getMessage());
         verify(userRepository, never()).save(any());
+    }
+
+    @DisplayName("Get user information (logged in)")
+    @Test
+    void getUserInformationTest() {
+        Authentication authentication = mock(Authentication.class);
+
+        when(authentication.isAuthenticated()).thenReturn(true);
+        when(authentication.getName()).thenReturn("Dainis");
+
+        UserInfoResponse response = userService.getUserInformation(authentication);
+
+        assertNotNull(response);
+        assertTrue(response.isLoggedIn());
+        assertEquals("Dainis", response.getUsername());
+    }
+
+    @DisplayName("Get user information (not logged in)")
+    @Test
+    void getUserInformationNotLoggedInTest() {
+        Authentication authentication = mock(AnonymousAuthenticationToken.class);
+
+        when(authentication.isAuthenticated()).thenReturn(false);
+
+        UserInfoResponse response = userService.getUserInformation(authentication);
+
+        assertNotNull(response);
+        assertFalse(response.isLoggedIn());
+        assertEquals("", response.getUsername());
     }
 }

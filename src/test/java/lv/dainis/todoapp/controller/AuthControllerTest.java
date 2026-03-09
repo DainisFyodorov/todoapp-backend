@@ -2,6 +2,7 @@ package lv.dainis.todoapp.controller;
 
 import lv.dainis.todoapp.config.SecurityConfiguration;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.responsemodel.UserInfoResponse;
 import lv.dainis.todoapp.service.CustomOAuth2UserService;
 import lv.dainis.todoapp.service.UserService;
 import org.junit.jupiter.api.DisplayName;
@@ -19,8 +20,8 @@ import tools.jackson.databind.ObjectMapper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
 @Import(SecurityConfiguration.class)
@@ -85,16 +86,32 @@ public class AuthControllerTest {
     @Test
     @WithMockUser(username = "Dainis")
     void checkStatusTest() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/status"))
+        UserInfoResponse response = new UserInfoResponse();
+        response.setUsername("Dainis");
+        response.setLoggedIn(true);
+
+        when(userService.getUserInformation(any())).thenReturn(response);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isLoggedIn").value(true));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.loggedIn").value(true))
+                .andExpect(jsonPath("$.username").value("Dainis"));
     }
 
     @DisplayName("Check status endpoint (not logged in)")
     @Test
     void checkStatusNotLoggedInTest() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/status"))
+        UserInfoResponse response = new UserInfoResponse();
+        response.setUsername("");
+        response.setLoggedIn(false);
+
+        when(userService.getUserInformation(any())).thenReturn(response);
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/auth/me"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.isLoggedIn").value(false));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.loggedIn").value(false))
+                .andExpect(jsonPath("$.username").value(""));
     }
 }
