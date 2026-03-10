@@ -1,7 +1,6 @@
 package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.TaskRepository;
-import lv.dainis.todoapp.dao.UserRepository;
 import lv.dainis.todoapp.entity.Category;
 import lv.dainis.todoapp.entity.Task;
 import lv.dainis.todoapp.entity.User;
@@ -28,13 +27,13 @@ public class TaskService {
         this.taskRepository = taskRepository;
     }
 
-    public List<TaskResponseDTO> getAllTasksByUsername(String username) {
-        User user = userService.findByUsername(username);
+    public List<TaskResponseDTO> getAllTasksByUserId(Long userId) {
+        User user = userService.findById(userId);
         return taskRepository.findAllByUser(user).stream().map(Task::toDTO).toList();
     }
 
-    public TaskResponseDTO createTask(TaskRequestDTO task, String username) {
-        User user = userService.findByUsername(username);
+    public TaskResponseDTO createTask(TaskRequestDTO task, Long userId) {
+        User user = userService.findById(userId);
         Category category = null;
 
         if(task.getCategoryId() != null) {
@@ -46,8 +45,8 @@ public class TaskService {
         return taskRepository.save(createdTask).toDTO();
     }
 
-    public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskDetails, String username) {
-        User user = userService.findByUsername(username);
+    public TaskResponseDTO updateTask(Long id, TaskRequestDTO taskDetails, Long userId) {
+        User user = userService.findById(userId);
 
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
@@ -69,8 +68,8 @@ public class TaskService {
         return taskRepository.save(task).toDTO();
     }
 
-    public void deleteTask(Long id, String username) {
-        User user = userService.findByUsername(username);
+    public void deleteTask(Long id, Long userId) {
+        User user = userService.findById(userId);
 
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Task not found"));
