@@ -16,6 +16,7 @@ The backend is implemented using Java and Spring Boot and exposes REST APIs cons
 - BCrypt (for password encoding)
 - JUnit
 - Mockito, MockMvc
+- OAuth2 (for Google, GitHub authentication)
 - REST APIs
 - Lombok
 - Maven
