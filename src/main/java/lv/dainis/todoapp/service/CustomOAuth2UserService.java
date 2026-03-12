@@ -2,6 +2,7 @@ package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.UserRepository;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.entity.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -12,10 +13,7 @@ import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequest, OAuth2User> {
@@ -74,10 +72,11 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
         attributes.put("oauth2_username", user.getUsername());
         //attributes.put("oauth2_userid", user.getId());
 
-        return new DefaultOAuth2User(
+        return UserPrincipal.create(user, List.of(new SimpleGrantedAuthority("USER")), attributes);
+        /*return new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority("USER")),
                 attributes,
                 "oauth2_username"
-        );
+        );*/
     }
 }

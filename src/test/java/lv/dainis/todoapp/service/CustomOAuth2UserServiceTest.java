@@ -2,6 +2,7 @@ package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.UserRepository;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.entity.UserPrincipal;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -67,11 +68,11 @@ public class CustomOAuth2UserServiceTest {
         when(userRepository.findByUsername(email)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
+        UserPrincipal result = (UserPrincipal) customOAuth2UserService.loadUser(oAuth2UserRequest);
+        //OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
 
         assertNotNull(result);
-        assertEquals(email, result.getAttribute("email"));
-        assertEquals(email, result.getAttribute("oauth2_username"));
+        assertEquals(email, result.getName());
         assertTrue(result.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "USER")));
 
@@ -105,11 +106,12 @@ public class CustomOAuth2UserServiceTest {
         when(userRepository.findByGithubId(githubId)).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
-        OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
+        UserPrincipal result = (UserPrincipal) customOAuth2UserService.loadUser(oAuth2UserRequest);
+        //OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
 
         assertNotNull(result);
         assertEquals(githubId, result.getAttribute("id"));
-        assertEquals(login, result.getAttribute("oauth2_username"));
+        assertEquals(login, result.getName());
         assertTrue(result.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "USER")));
 
@@ -118,7 +120,9 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void existingUserTest() {
+        Long userId = 2L;
         String email = "dainis@gmail.com";
+
         Map<String, Object> attributes = Map.of("email", email);
         OAuth2User mockOAuth2User = new DefaultOAuth2User(
                 Collections.singleton(new SimpleGrantedAuthority("USER")),
@@ -139,15 +143,18 @@ public class CustomOAuth2UserServiceTest {
                 .thenReturn(mockOAuth2User);
 
         User existingUser = new User();
+        existingUser.setId(userId);
         existingUser.setUsername(email);
 
         when(oAuth2UserRequest.getClientRegistration()).thenReturn(clientRegistration);
         when(userRepository.findByUsername(email)).thenReturn(Optional.of(existingUser));
 
-        OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
+        UserPrincipal result = (UserPrincipal) customOAuth2UserService.loadUser(oAuth2UserRequest);
+        //OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
 
         assertNotNull(result);
-        assertEquals(email, result.getAttribute("email"));
+        assertEquals(userId, result.getId());
+        assertEquals(email, result.getName());
         assertEquals(email, result.getAttribute("oauth2_username"));
         assertTrue(result.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "USER")));
@@ -157,6 +164,7 @@ public class CustomOAuth2UserServiceTest {
 
     @Test
     void existingGitHubUserTest() {
+        Long userId = 2L;
         Integer githubId = 150;
         String login = "DainisFyodorov";
         Map<String, Object> attributes = Map.of("login", login, "id", githubId);
@@ -176,6 +184,7 @@ public class CustomOAuth2UserServiceTest {
                 .build();
 
         User existingUser = new User();
+        existingUser.setId(userId);
         existingUser.setUsername(login);
         existingUser.setGithubId(githubId);
 
@@ -185,11 +194,13 @@ public class CustomOAuth2UserServiceTest {
         when(oAuth2UserRequest.getClientRegistration()).thenReturn(clientRegistration);
         when(userRepository.findByGithubId(githubId)).thenReturn(Optional.of(existingUser));
 
-        OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
+        UserPrincipal result = (UserPrincipal) customOAuth2UserService.loadUser(oAuth2UserRequest);
+        //OAuth2User result = customOAuth2UserService.loadUser(oAuth2UserRequest);
 
         assertNotNull(result);
+        assertEquals(userId, result.getId());
         assertEquals(githubId, result.getAttribute("id"));
-        assertEquals(login, result.getAttribute("login"));
+        assertEquals(login, result.getName());
         assertEquals(login, result.getAttribute("oauth2_username"));
         assertTrue(result.getAuthorities().stream()
                 .anyMatch(a -> Objects.equals(a.getAuthority(), "USER")));

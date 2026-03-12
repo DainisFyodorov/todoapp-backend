@@ -2,6 +2,7 @@ package lv.dainis.todoapp.controller;
 
 import lv.dainis.todoapp.config.SecurityConfiguration;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.entity.UserPrincipal;
 import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
 import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
 import lv.dainis.todoapp.service.CustomOAuth2UserService;
@@ -12,7 +13,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -22,6 +25,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TaskController.class)
@@ -42,12 +46,13 @@ public class TaskControllerTest {
 
     @DisplayName("Get tasks endpoint (success 200 OK)")
     @Test
-    @WithMockUser(username = "Dainis")
     void getTasksSuccess() throws Exception {
-        String username = "Dainis";
+        Long userId = 1L;
 
         User user = new User();
-        user.setUsername(username);
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         TaskResponseDTO taskOne = new TaskResponseDTO();
         TaskResponseDTO taskTwo = new TaskResponseDTO();
@@ -55,41 +60,54 @@ public class TaskControllerTest {
         taskOne.setTitle("Task 1");
         taskTwo.setTitle("Task 2");
 
-        when(taskService.getAllTasksByUsername(username)).thenReturn(List.of(taskOne, taskTwo));
+        when(taskService.getAllTasksByUserId(userId)).thenReturn(List.of(taskOne, taskTwo));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/get"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].title").value(taskOne.getTitle()))
-                .andExpect(jsonPath("$[1].title").value(taskTwo.getTitle()));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/get")
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(jsonPath("$[0].title").value(taskOne.getTitle()))
+                    .andExpect(jsonPath("$[1].title").value(taskTwo.getTitle()));
 
-        verify(taskService, times(1)).getAllTasksByUsername(username);
+        verify(taskService, times(1)).getAllTasksByUserId(userId);
     }
 
     @DisplayName("Get tasks endpoint (empty list 200 OK)")
     @Test
-    @WithMockUser(username = "Dainis")
     void getTasksEmptyListTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 1L;
 
-        when(taskService.getAllTasksByUsername(username)).thenReturn(List.of());
+        User user = new User();
+        user.setId(userId);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/get"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(0));
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
+        when(taskService.getAllTasksByUserId(userId)).thenReturn(List.of());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/get")
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(0));
     }
 
     @DisplayName("Get tasks endpoint (user not found 400 bad request)")
     @Test
-    @WithMockUser(username = "Dainis")
     void getTasksUserNotFoundTest() throws Exception {
-        when(taskService.getAllTasksByUsername("Dainis"))
+        Long userId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
+        when(taskService.getAllTasksByUserId(userId))
                 .thenThrow(new RuntimeException("User not found"));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/get"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("User not found"));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/get")
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("User not found"));
     }
 
     @DisplayName("Get tasks endpoint (unauthorized 401/403)")
@@ -101,9 +119,14 @@ public class TaskControllerTest {
 
     @DisplayName("Create task endpoint (success 201 created)")
     @Test
-    @WithMockUser(username = "Dainis")
     void createTaskTest() throws Exception {
         Long createdId = 1L;
+        Long userId = 2L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task");
@@ -118,33 +141,36 @@ public class TaskControllerTest {
         responseDTO.setCompleted(false);
         responseDTO.setCategoryId(null);
 
-        when(taskService.createTask(any(TaskRequestDTO.class), eq("Dainis"))).thenReturn(responseDTO);
+        when(taskService.createTask(any(TaskRequestDTO.class), eq(userId))).thenReturn(responseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/task/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(task))
-                .with(csrf()))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(createdId))
-                .andExpect(jsonPath("$.title").value(task.getTitle()))
-                .andExpect(jsonPath("$.description").value(task.getDescription()))
-                .andExpect(jsonPath("$.completed").value(task.isCompleted()))
-                .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.id").value(createdId))
+                    .andExpect(jsonPath("$.title").value(task.getTitle()))
+                    .andExpect(jsonPath("$.description").value(task.getDescription()))
+                    .andExpect(jsonPath("$.completed").value(task.isCompleted()))
+                    .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
     }
 
     @DisplayName("Create task endpoint (validation failure 400 bad request)")
     @Test
-    @WithMockUser(username = "Dainis")
     void createTaskValidationFailureTest() throws Exception {
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("");
         task.setDescription("");
 
+        UserPrincipal principal = new UserPrincipal(new User(), List.of(new SimpleGrantedAuthority("USER")));
+
         mockMvc.perform(MockMvcRequestBuilders.post("/api/task/create")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(task))
-                .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest());
     }
 
     @DisplayName("Create task endpoint (user not logged in 401)")
@@ -163,10 +189,14 @@ public class TaskControllerTest {
 
     @DisplayName("Update task endpoint (200 OK)")
     @Test
-    @WithMockUser(username = "Dainis")
     void updateTaskTest() throws Exception {
         Long taskId = 1L;
-        String username = "Dainis";
+        Long userId = 2L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Title");
@@ -180,33 +210,36 @@ public class TaskControllerTest {
         response.setCompleted(true);
         response.setCategoryId(null);
 
-        when(taskService.updateTask(eq(taskId), eq(task), eq(username))).thenReturn(response);
+        when(taskService.updateTask(eq(taskId), eq(task), eq(userId))).thenReturn(response);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/" + taskId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(task))
-                .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value(task.getTitle()))
-                .andExpect(jsonPath("$.description").value(task.getDescription()))
-                .andExpect(jsonPath("$.completed").value(task.isCompleted()))
-                .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.title").value(task.getTitle()))
+                    .andExpect(jsonPath("$.description").value(task.getDescription()))
+                    .andExpect(jsonPath("$.completed").value(task.isCompleted()))
+                    .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
 
-        verify(taskService, times(1)).updateTask(eq(taskId), eq(task), eq(username));
+        verify(taskService, times(1)).updateTask(eq(taskId), eq(task), eq(userId));
     }
 
     @DisplayName("Update task endpoint (validation failure 400 bad request)")
     @Test
-    @WithMockUser(username = "Dainis")
     void updateTaskValidationFailureTest() throws Exception {
         TaskRequestDTO invalidTask = new TaskRequestDTO();
         invalidTask.setTitle("");
 
+        UserPrincipal principal = new UserPrincipal(new User(), List.of(new SimpleGrantedAuthority("USER")));
+
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(invalidTask))
-                .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest());
     }
 
     @DisplayName("Update task endpoint (unauthorized 401)")
@@ -219,43 +252,53 @@ public class TaskControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(task))
                 .with(csrf()))
-                .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized());
     }
 
     @DisplayName("Update task endpoint (user is not the owner of the task 400 bad request)")
     @Test
-    @WithMockUser(username = "Dainis")
     void updateTaskWhenUserIsNotTheOwnerTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 2L;
         Long taskId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task title");
         task.setDescription("");
 
-        when(taskService.updateTask(eq(taskId), eq(task), eq(username)))
+        when(taskService.updateTask(eq(taskId), eq(task), eq(userId)))
                 .thenThrow(new RuntimeException("You can only edit your own tasks"));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/task/update/" + taskId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(task))
-                .with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("You can only edit your own tasks"));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("You can only edit your own tasks"));
     }
 
     @DisplayName("Delete task endpoint (200 OK)")
     @Test
-    @WithMockUser(username = "Dainis")
     void deleteTaskTest() throws Exception {
         Long taskId = 1L;
-        String username = "Dainis";
+        Long userId = 2L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/task/delete/" + taskId)
-                .with(csrf()))
-                .andExpect(status().isNoContent());
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isNoContent());
 
-        verify(taskService, times(1)).deleteTask(eq(taskId), eq(username));
+        verify(taskService, times(1)).deleteTask(eq(taskId), eq(userId));
     }
 
     @DisplayName("Delete task endpoint (401 unauthorized)")
@@ -263,24 +306,29 @@ public class TaskControllerTest {
     void deleteTaskWhenNotLoggedInt() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/task/delete/1")
                 .with(csrf()))
-                .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized());
 
         verify(taskService, never()).deleteTask(any(), any());
     }
 
     @DisplayName("Delete task endpoint (user is not the owner of the task 400 bad request)")
     @Test
-    @WithMockUser(username = "Dainis")
     void deleteTaskWhenUserIsNotTheOwnerTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 2L;
         Long taskId = 1L;
 
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
         doThrow(new RuntimeException("You can only delete your own tasks"))
-                .when(taskService).deleteTask(eq(taskId), eq(username));
+                .when(taskService).deleteTask(eq(taskId), eq(userId));
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/task/delete/" + taskId)
-                .with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("You can only delete your own tasks"));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("You can only delete your own tasks"));
     }
 }

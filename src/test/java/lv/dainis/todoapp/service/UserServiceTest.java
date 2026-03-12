@@ -30,6 +30,29 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    @DisplayName("Find by user id (success)")
+    @Test
+    void findByUserIdTest() {
+        Long userId = 1L;
+
+        User existingUser = new User();
+        existingUser.setId(userId);
+
+        when(userRepository.findById(userId)).thenReturn(Optional.of(existingUser));
+
+        assertEquals(existingUser, userService.findById(userId));
+    }
+
+    @DisplayName("Find by user id (user not found)")
+    @Test
+    void findByUserIdUserNotFoundTest() {
+        Long userId = 1L;
+
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> userService.findById(userId));
+    }
+
     @DisplayName("Find by username (success)")
     @Test
     void findByUsernameTest() {

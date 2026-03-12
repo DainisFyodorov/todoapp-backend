@@ -2,6 +2,7 @@ package lv.dainis.todoapp.service;
 
 import lv.dainis.todoapp.dao.UserRepository;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.entity.UserPrincipal;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,17 +28,20 @@ public class CustomUserDetailsServiceTest {
     @DisplayName("Load user by username (success)")
     @Test
     void loadUserByUsernameSuccessTest() {
+        Long userId = 2L;
         String username = "Dainis";
 
         User user = new User();
+        user.setId(userId);
         user.setUsername(username);
         user.setPassword("encoded password");
 
         when(userRepository.findByUsername(username)).thenReturn(Optional.of(user));
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UserPrincipal userDetails = (UserPrincipal) userDetailsService.loadUserByUsername(username);
 
         assertNotNull(userDetails);
+        assertEquals(userId, userDetails.getId());
         assertEquals(username, userDetails.getUsername());
         assertEquals("encoded password", userDetails.getPassword());
         assertFalse(userDetails.getAuthorities().isEmpty());

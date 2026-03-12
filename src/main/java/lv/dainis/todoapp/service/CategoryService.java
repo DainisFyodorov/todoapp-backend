@@ -34,8 +34,8 @@ public class CategoryService {
         return categoryRepository.findById(categoryId).orElseThrow(() -> new RuntimeException("Category not found"));
     }
 
-    public List<CategoryResponseDTO> getAllCategoriesByUsername(String username) {
-        User user = userService.findByUsername(username);
+    public List<CategoryResponseDTO> getAllCategoriesByUserId(Long userId) {
+        User user = userService.findById(userId);
         return categoryRepository.findAllByUser(user).stream().map(category -> {
             CategoryResponseDTO dto = new CategoryResponseDTO();
             dto.setId(category.getId());
@@ -44,8 +44,8 @@ public class CategoryService {
         }).collect(Collectors.toList());
     }
 
-    public CategoryResponseDTO createCategory(CategoryRequestDTO categoryRequestDTO, String username) {
-        User user = userService.findByUsername(username);
+    public CategoryResponseDTO createCategory(CategoryRequestDTO categoryRequestDTO, Long userId) {
+        User user = userService.findById(userId);
 
         Category savedCategory = new Category();
         savedCategory.setName(categoryRequestDTO.getName());
@@ -60,8 +60,8 @@ public class CategoryService {
         return categoryResponse;
     }
 
-    public CategoryResponseDTO updateCategory(Long categoryId, CategoryRequestDTO categoryRequestDTO, String username) {
-        User user = userService.findByUsername(username);
+    public CategoryResponseDTO updateCategory(Long categoryId, CategoryRequestDTO categoryRequestDTO, Long userId) {
+        User user = userService.findById(userId);
 
         Category category = categoryRepository.findById(categoryId).orElseThrow(
                 () -> new RuntimeException("Category not found"));
@@ -81,8 +81,8 @@ public class CategoryService {
     }
 
     @Transactional
-    public void deleteCategory(Long categoryId, String username) {
-        User user = userService.findByUsername(username);
+    public void deleteCategory(Long categoryId, Long userId) {
+        User user = userService.findById(userId);
 
         Category category = categoryRepository.findById(categoryId).orElseThrow(
                 () -> new RuntimeException("Category not found"));

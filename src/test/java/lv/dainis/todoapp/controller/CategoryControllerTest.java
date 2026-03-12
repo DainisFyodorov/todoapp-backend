@@ -1,6 +1,8 @@
 package lv.dainis.todoapp.controller;
 
 import lv.dainis.todoapp.config.SecurityConfiguration;
+import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.entity.UserPrincipal;
 import lv.dainis.todoapp.requestmodel.CategoryRequestDTO;
 import lv.dainis.todoapp.responsemodel.CategoryResponseDTO;
 import lv.dainis.todoapp.service.CategoryService;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,6 +25,7 @@ import java.util.List;
 
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(CategoryController.class)
@@ -44,9 +48,13 @@ public class CategoryControllerTest {
 
     @Test
     @DisplayName("Get all categories (success 200 OK)")
-    @WithMockUser(username = "Dainis")
     void getAllUserCategoriesTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         CategoryResponseDTO categoryOne = new CategoryResponseDTO();
         categoryOne.setId(1L);
@@ -56,46 +64,57 @@ public class CategoryControllerTest {
         categoryTwo.setId(2L);
         categoryTwo.setName("Second category");
 
-        when(categoryService.getAllCategoriesByUsername(username)).thenReturn(List.of(categoryOne, categoryTwo));
+        when(categoryService.getAllCategoriesByUserId(userId)).thenReturn(List.of(categoryOne, categoryTwo));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/category"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].id").value(categoryOne.getId()))
-                .andExpect(jsonPath("$[0].name").value(categoryOne.getName()))
-                .andExpect(jsonPath("$[1].id").value(categoryTwo.getId()))
-                .andExpect(jsonPath("$[1].name").value(categoryTwo.getName()));
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/category")
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.length()").value(2))
+                    .andExpect(jsonPath("$[0].id").value(categoryOne.getId()))
+                    .andExpect(jsonPath("$[0].name").value(categoryOne.getName()))
+                    .andExpect(jsonPath("$[1].id").value(categoryTwo.getId()))
+                    .andExpect(jsonPath("$[1].name").value(categoryTwo.getName()));
 
-        verify(categoryService, times(1)).getAllCategoriesByUsername(username);
+        verify(categoryService, times(1)).getAllCategoriesByUserId(userId);
     }
 
     @Test
     @DisplayName("Get all categories (empty list 200 OK)")
-    @WithMockUser(username = "Dainis")
     void getAllUserCategoriesEmptyTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 1L;
 
-        when(categoryService.getAllCategoriesByUsername(username)).thenReturn(Collections.emptyList());
+        User user = new User();
+        user.setId(userId);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/category"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(0));
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
+        when(categoryService.getAllCategoriesByUserId(userId)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/category")
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
     @DisplayName("Get all categories (user not found 400 bad request)")
-    @WithMockUser(username = "Dainis")
     void getAllUserCategoriesUserNotFoundBadRequestTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 1L;
 
-        when(categoryService.getAllCategoriesByUsername(username)).thenThrow(new RuntimeException("User not found"));
+        User user = new User();
+        user.setId(userId);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/category"))
-                .andExpect(status().isBadRequest())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.message").value("User not found"));
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
+        when(categoryService.getAllCategoriesByUserId(userId)).thenThrow(new RuntimeException("User not found"));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/category")
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.message").value("User not found"));
     }
 
     @Test
@@ -111,9 +130,13 @@ public class CategoryControllerTest {
 
     @Test
     @DisplayName("Create category (success 200 OK)")
-    @WithMockUser(username = "Dainis")
     void createCategorySuccessTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
         categoryDTO.setName("Test category");
@@ -122,15 +145,16 @@ public class CategoryControllerTest {
         responseDTO.setId(1L);
         responseDTO.setName(categoryDTO.getName());
 
-        when(categoryService.createCategory(any(CategoryRequestDTO.class), eq(username))).thenReturn(responseDTO);
+        when(categoryService.createCategory(any(CategoryRequestDTO.class), eq(userId))).thenReturn(responseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/category")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryDTO))
-                .with(csrf()))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(responseDTO.getId()))
-                .andExpect(jsonPath("$.name").value(categoryDTO.getName()));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.id").value(responseDTO.getId()))
+                    .andExpect(jsonPath("$.name").value(categoryDTO.getName()));
     }
 
     @Test
@@ -140,11 +164,14 @@ public class CategoryControllerTest {
         CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
         categoryDTO.setName("");
 
+        UserPrincipal principal = new UserPrincipal(new User(), List.of(new SimpleGrantedAuthority("USER")));
+
         mockMvc.perform(MockMvcRequestBuilders.post("/api/category")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryDTO))
-                .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -157,7 +184,7 @@ public class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryDTO))
                 .with(csrf()))
-                .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized());
     }
 
     //endregion
@@ -166,10 +193,14 @@ public class CategoryControllerTest {
 
     @Test
     @DisplayName("Update category (success 200 OK)")
-    @WithMockUser(username = "Dainis")
     void updateCategorySuccessTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
         categoryDTO.setName("Category name");
@@ -178,24 +209,26 @@ public class CategoryControllerTest {
         responseDTO.setId(categoryId);
         responseDTO.setName("Category name");
 
-        when(categoryService.updateCategory(categoryId, categoryDTO, username)).thenReturn(responseDTO);
+        when(categoryService.updateCategory(categoryId, categoryDTO, userId)).thenReturn(responseDTO);
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/category/" + categoryId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryDTO))
-                .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(categoryId))
-                .andExpect(jsonPath("$.name").value(categoryDTO.getName()));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.id").value(categoryId))
+                    .andExpect(jsonPath("$.name").value(categoryDTO.getName()));
 
-        verify(categoryService, times(1)).updateCategory(eq(categoryId), eq(categoryDTO), eq(username));
+        verify(categoryService, times(1)).updateCategory(eq(categoryId), eq(categoryDTO), eq(userId));
     }
 
     @Test
     @DisplayName("Update category (validation failure bad request)")
-    @WithMockUser(username = "Dainis")
     void updateCategoryValidationFailureTest() throws Exception {
         Long categoryId = 1L;
+
+        UserPrincipal principal = new UserPrincipal(new User(), List.of(new SimpleGrantedAuthority("USER")));
 
         CategoryRequestDTO categoryDTO = new CategoryRequestDTO();
         categoryDTO.setName("");
@@ -203,8 +236,9 @@ public class CategoryControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.put("/api/category/" + categoryId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryDTO))
-                .with(csrf()))
-                .andExpect(status().isBadRequest());
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest());
 
         verify(categoryService, never()).updateCategory(eq(categoryId), eq(categoryDTO), any());
     }
@@ -219,28 +253,33 @@ public class CategoryControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryDTO))
                 .with(csrf()))
-                .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("Update category (user is not the owner 400 bad request)")
-    @WithMockUser(username = "Dainis")
     void updateCategoryWhenUserIsNotTheOwnerTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
+
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
         categoryRequestDTO.setName("123456");
 
-        when(categoryService.updateCategory(eq(categoryId), eq(categoryRequestDTO), eq(username))).thenThrow(
+        when(categoryService.updateCategory(eq(categoryId), eq(categoryRequestDTO), eq(userId))).thenThrow(
                 new RuntimeException("You can only edit your own categories"));
 
         mockMvc.perform(MockMvcRequestBuilders.put("/api/category/" + categoryId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(categoryRequestDTO))
-                .with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("You can only edit your own categories"));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("You can only edit your own categories"));
     }
 
     //endregion
@@ -249,16 +288,21 @@ public class CategoryControllerTest {
 
     @Test
     @DisplayName("Delete category (success 200 OK)")
-    @WithMockUser(username = "Dainis")
     void deleteCategorySuccessTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
-                .with(csrf()))
-                .andExpect(status().isNoContent());
+        User user = new User();
+        user.setId(userId);
 
-        verify(categoryService, times(1)).deleteCategory(eq(categoryId), eq(username));
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isNoContent());
+
+        verify(categoryService, times(1)).deleteCategory(eq(categoryId), eq(userId));
     }
 
     @Test
@@ -266,25 +310,30 @@ public class CategoryControllerTest {
     void deleteCategoryUnauthorizedTest() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/1")
                 .with(csrf()))
-                .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized());
 
         verify(categoryService, never()).deleteCategory(any(), any());
     }
 
     @Test
     @DisplayName("Delete category (user is not the owner)")
-    @WithMockUser(username = "Dainis")
     void deleteCategoryWhenUserIsNotTheOwnerTest() throws Exception {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
 
+        User user = new User();
+        user.setId(userId);
+
+        UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+
         doThrow(new RuntimeException("You can delete only your own tasks"))
-                .when(categoryService).deleteCategory(eq(categoryId), eq(username));
+                .when(categoryService).deleteCategory(eq(categoryId), eq(userId));
 
         mockMvc.perform(MockMvcRequestBuilders.delete("/api/category/" + categoryId)
-                .with(csrf()))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("You can delete only your own tasks"));
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("You can delete only your own tasks"));
     }
 
     //endregion

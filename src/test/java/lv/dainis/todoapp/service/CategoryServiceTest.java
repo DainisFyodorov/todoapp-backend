@@ -65,29 +65,29 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Get all user's categories (success)")
     void getUserCategoriesTest() {
-        String username = "Dainis";
+        Long userId = 1L;
 
         User user = new User();
-        user.setUsername(username);
+        user.setId(userId);
 
         Category categoryOne = new Category();
         Category categoryTwo = new Category();
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findAllByUser(user)).thenReturn(List.of(categoryOne, categoryTwo));
 
-        List<CategoryResponseDTO> categories = categoryService.getAllCategoriesByUsername(username);
+        List<CategoryResponseDTO> categories = categoryService.getAllCategoriesByUserId(userId);
         assertEquals(2, categories.size());
     }
 
     @Test
     @DisplayName("Get all user's categories (user not found)")
     void getUserCategoriesUserNotFoundTest() {
-        String username = "Dainis";
+        Long userId = 1L;
 
-        when(userService.findByUsername(username)).thenThrow(new RuntimeException("User not found"));
+        when(userService.findById(userId)).thenThrow(new RuntimeException("User not found"));
 
-        assertThrows(RuntimeException.class, () -> categoryService.getAllCategoriesByUsername(username));
+        assertThrows(RuntimeException.class, () -> categoryService.getAllCategoriesByUserId(userId));
     }
     //endregion
 
@@ -95,18 +95,18 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Create category (success)")
     void createCategorySuccessTest() {
-        String username = "Dainis";
+        Long userId = 1L;
 
         User user = new User();
-        user.setUsername(username);
+        user.setId(userId);
 
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
         categoryRequestDTO.setName("Test category");
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
 
-        CategoryResponseDTO categoryResponseDTO = categoryService.createCategory(categoryRequestDTO, username);
+        CategoryResponseDTO categoryResponseDTO = categoryService.createCategory(categoryRequestDTO, userId);
 
         assertNotNull(categoryResponseDTO);
         assertNotEquals(0, categoryResponseDTO.getId());
@@ -118,13 +118,13 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Create category (user not found)")
     void createCategoryUserNotFoundTest() {
-        String username = "Dainis";
+        Long userId = 1L;
 
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
 
-        when(userService.findByUsername(username)).thenThrow(new RuntimeException("User not found"));
+        when(userService.findById(userId)).thenThrow(new RuntimeException("User not found"));
 
-        assertThrows(RuntimeException.class, () -> categoryService.createCategory(categoryRequestDTO, username));
+        assertThrows(RuntimeException.class, () -> categoryService.createCategory(categoryRequestDTO, userId));
 
         verify(categoryRepository, never()).save(any());
     }
@@ -135,12 +135,11 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Update category (success)")
     void updateCategorySuccessTest() {
-        String username = "Dainis";
+        Long userId = 1L;
         Long categoryId = 1L;
 
         User user = new User();
-        user.setId(1L);
-        user.setUsername(username);
+        user.setId(userId);
 
         Category existingCategory = new Category();
         existingCategory.setId(categoryId);
@@ -150,11 +149,11 @@ public class CategoryServiceTest {
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
         categoryRequestDTO.setName("After title");
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(existingCategory));
         when(categoryRepository.save(any(Category.class))).thenAnswer(i -> i.getArgument(0));
 
-        CategoryResponseDTO responseDTO = categoryService.updateCategory(categoryId, categoryRequestDTO, username);
+        CategoryResponseDTO responseDTO = categoryService.updateCategory(categoryId, categoryRequestDTO, userId);
 
         assertNotNull(responseDTO);
         assertEquals(categoryRequestDTO.getName(), existingCategory.getName());
@@ -167,15 +166,14 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Update category (user not found)")
     void updateCategoryUserNotFoundTest() {
-
-        String username = "Dainis";
+        Long userId = 1L;
 
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
 
-        when(userService.findByUsername(username)).thenThrow(new RuntimeException("User not found"));
+        when(userService.findById(userId)).thenThrow(new RuntimeException("User not found"));
 
         assertThrows(RuntimeException.class, () ->
-                categoryService.updateCategory(1L, categoryRequestDTO, username));
+                categoryService.updateCategory(1L, categoryRequestDTO, userId));
 
         verify(categoryRepository, never()).save(any());
     }
@@ -183,17 +181,19 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Update category (category not found)")
     void updateCategoryWhenCategoryNotFoundTest() {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
 
         User user = new User();
+        user.setId(userId);
+
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
         
         Exception exception = assertThrows(RuntimeException.class, () ->
-                categoryService.updateCategory(categoryId, categoryRequestDTO, username));
+                categoryService.updateCategory(categoryId, categoryRequestDTO, userId));
 
         assertEquals("Category not found", exception.getMessage());
 
@@ -203,25 +203,26 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Update category (user is not the owner)")
     void updateCategoryWhenUserIsNotOwnerTest() {
-        String username = "Dainis";
+        Long userId = 2L;
+        Long ownerId = 3L;
         Long categoryId = 1L;
 
         User user = new User();
-        user.setId(1L);
+        user.setId(userId);
 
         User categoryOwner = new User();
-        categoryOwner.setId(2L);
+        categoryOwner.setId(ownerId);
 
         CategoryRequestDTO categoryRequestDTO = new CategoryRequestDTO();
 
         Category existingCategory = new Category();
         existingCategory.setUser(categoryOwner);
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(existingCategory));
 
         Exception exception = assertThrows(RuntimeException.class, () ->
-                categoryService.updateCategory(categoryId, categoryRequestDTO, username));
+                categoryService.updateCategory(categoryId, categoryRequestDTO, userId));
 
         assertEquals("You can update only your own categories", exception.getMessage());
 
@@ -235,11 +236,11 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Delete category (success)")
     void deleteCategorySuccessTest() {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
 
         User user = new User();
-        user.setId(1L);
+        user.setId(userId);
 
         Category existingCategory = new Category();
         existingCategory.setUser(user);
@@ -247,14 +248,14 @@ public class CategoryServiceTest {
         Task existingTask = new Task();
         existingTask.setCategory(existingCategory);
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(existingCategory));
         doAnswer(i -> {
             existingTask.setCategory(null);
             return null;
         }).when(taskRepository).clearTasksFromCategory(eq(categoryId));
 
-        categoryService.deleteCategory(categoryId, username);
+        categoryService.deleteCategory(categoryId, userId);
 
         assertNull(existingTask.getCategory());
 
@@ -265,13 +266,13 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Delete category (user not found)")
     void deleteCategoryUserNotFoundTest() {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
 
-        when(userService.findByUsername(username)).thenThrow(new RuntimeException("User not found"));
+        when(userService.findById(userId)).thenThrow(new RuntimeException("User not found"));
 
         Exception exception = assertThrows(RuntimeException.class, () ->
-                categoryService.deleteCategory(categoryId, username));
+                categoryService.deleteCategory(categoryId, userId));
 
         assertEquals("User not found", exception.getMessage());
 
@@ -281,16 +282,17 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Delete category (category not found")
     void deleteCategoryWhenCategoryNotFoundTest() {
-        String username = "Dainis";
+        Long userId = 2L;
         Long categoryId = 1L;
 
         User user = new User();
+        user.setId(userId);
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
         Exception exception = assertThrows(RuntimeException.class, () ->
-                categoryService.deleteCategory(categoryId, username));
+                categoryService.deleteCategory(categoryId, userId));
 
         assertEquals("Category not found", exception.getMessage());
 
@@ -300,23 +302,24 @@ public class CategoryServiceTest {
     @Test
     @DisplayName("Delete category (user is not the owner)")
     void deleteCategoryWhenUserIsNotOwnerTest() {
-        String username = "Dainis";
+        Long userId = 2L;
+        Long ownerId = 3L;
         Long categoryId = 1L;
 
         User user = new User();
-        user.setId(1L);
+        user.setId(userId);
 
         User categoryOwner = new User();
-        categoryOwner.setId(2L);
+        categoryOwner.setId(ownerId);
 
         Category existingCategory = new Category();
         existingCategory.setUser(categoryOwner);
 
-        when(userService.findByUsername(username)).thenReturn(user);
+        when(userService.findById(userId)).thenReturn(user);
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(existingCategory));
 
         Exception exception = assertThrows(RuntimeException.class, () ->
-                categoryService.deleteCategory(categoryId, username));
+                categoryService.deleteCategory(categoryId, userId));
 
         assertEquals("You can delete only your own categories", exception.getMessage());
 

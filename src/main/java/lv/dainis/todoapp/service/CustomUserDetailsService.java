@@ -3,11 +3,15 @@ package lv.dainis.todoapp.service;
 import lombok.NonNull;
 import lv.dainis.todoapp.dao.UserRepository;
 import lv.dainis.todoapp.entity.User;
+import lv.dainis.todoapp.entity.UserPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
@@ -25,10 +29,11 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        return org.springframework.security.core.userdetails.User.builder()
+        return new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
+        /*return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())
                 .password(user.getPassword())
                 .roles("USER")
-                .build();
+                .build();*/
     }
 }
