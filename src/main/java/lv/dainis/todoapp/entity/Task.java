@@ -31,6 +31,10 @@ public class Task {
     @JsonIgnore
     private Category category;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private TaskPriority priority;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
