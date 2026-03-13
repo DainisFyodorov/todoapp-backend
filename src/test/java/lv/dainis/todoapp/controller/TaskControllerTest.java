@@ -339,4 +339,24 @@ public class TaskControllerTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value("You can only delete your own tasks"));
     }
+
+    @DisplayName("Get priorities (success)")
+    @Test
+    void getPrioritiesTest() throws Exception {
+        UserPrincipal principal = new UserPrincipal(new User(), List.of(new SimpleGrantedAuthority("USER")));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/priorities")
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray());
+    }
+
+    @DisplayName("Get priorities (not authorized)")
+    @Test
+    void getPrioritiesNotAuthorized() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/priorities")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+    }
 }

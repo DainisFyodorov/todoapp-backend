@@ -1,6 +1,7 @@
 package lv.dainis.todoapp.controller;
 
 import jakarta.validation.Valid;
+import lv.dainis.todoapp.entity.TaskPriority;
 import lv.dainis.todoapp.entity.UserPrincipal;
 import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
 import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
@@ -11,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -57,4 +58,9 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/priorities")
+    public ResponseEntity<List<String>> getPriorities() {
+        List<String> priorities = Arrays.stream(TaskPriority.values()).map(Enum::name).toList();
+        return ResponseEntity.ok(priorities);
+    }
 }
