@@ -1,11 +1,14 @@
 package lv.dainis.todoapp.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
 import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "task")
@@ -35,6 +38,9 @@ public class Task {
     @Enumerated(EnumType.STRING)
     private TaskPriority priority;
 
+    @Nullable
+    private LocalDate dueDate;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
@@ -47,6 +53,7 @@ public class Task {
         dto.setDescription(this.description);
         dto.setCompleted(this.completed);
         dto.setPriority(this.priority);
+        dto.setDueDate(this.dueDate);
         dto.setCategoryId(this.category != null ? this.category.getId() : null);
 
         return dto;
@@ -58,6 +65,7 @@ public class Task {
         task.setDescription(dto.getDescription());
         task.setCompleted(dto.isCompleted());
         task.setPriority(dto.getPriority());
+        task.setDueDate(dto.getDueDate());
         task.setUser(user);
         task.setCategory(category);
 
