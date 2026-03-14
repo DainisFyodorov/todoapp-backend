@@ -3,6 +3,7 @@ package lv.dainis.todoapp.requestmodel;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lv.dainis.todoapp.entity.TaskPriority;
 
 @Data
 public class TaskRequestDTO {
@@ -16,6 +17,9 @@ public class TaskRequestDTO {
 
     @NotNull(message = "Completed cannot be null")
     private boolean completed;
+
+    @NotNull(message = "Priority cannot be null")
+    private TaskPriority priority;
 
     private Long categoryId;
 

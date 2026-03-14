@@ -31,6 +31,10 @@ public class Task {
     @JsonIgnore
     private Category category;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private TaskPriority priority;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     @JsonIgnore
@@ -42,6 +46,7 @@ public class Task {
         dto.setTitle(this.title);
         dto.setDescription(this.description);
         dto.setCompleted(this.completed);
+        dto.setPriority(this.priority);
         dto.setCategoryId(this.category != null ? this.category.getId() : null);
 
         return dto;
@@ -52,6 +57,7 @@ public class Task {
         task.setTitle(dto.getTitle());
         task.setDescription(dto.getDescription());
         task.setCompleted(dto.isCompleted());
+        task.setPriority(dto.getPriority());
         task.setUser(user);
         task.setCategory(category);
 

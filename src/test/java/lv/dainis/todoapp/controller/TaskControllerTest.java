@@ -1,6 +1,7 @@
 package lv.dainis.todoapp.controller;
 
 import lv.dainis.todoapp.config.SecurityConfiguration;
+import lv.dainis.todoapp.entity.TaskPriority;
 import lv.dainis.todoapp.entity.User;
 import lv.dainis.todoapp.entity.UserPrincipal;
 import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
@@ -131,6 +132,7 @@ public class TaskControllerTest {
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task");
         task.setDescription("Description");
+        task.setPriority(TaskPriority.MEDIUM);
         task.setCompleted(false);
         task.setCategoryId(null);
 
@@ -138,6 +140,7 @@ public class TaskControllerTest {
         responseDTO.setId(createdId);
         responseDTO.setTitle("Task");
         responseDTO.setDescription("Description");
+        responseDTO.setPriority(TaskPriority.MEDIUM);
         responseDTO.setCompleted(false);
         responseDTO.setCategoryId(null);
 
@@ -152,6 +155,7 @@ public class TaskControllerTest {
                     .andExpect(jsonPath("$.id").value(createdId))
                     .andExpect(jsonPath("$.title").value(task.getTitle()))
                     .andExpect(jsonPath("$.description").value(task.getDescription()))
+                    .andExpect(jsonPath("$.priority").value(task.getPriority().toString()))
                     .andExpect(jsonPath("$.completed").value(task.isCompleted()))
                     .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
     }
@@ -202,12 +206,14 @@ public class TaskControllerTest {
         task.setTitle("Title");
         task.setDescription("Description");
         task.setCompleted(true);
+        task.setPriority(TaskPriority.MEDIUM);
         task.setCategoryId(null);
 
         TaskResponseDTO response = new TaskResponseDTO();
         response.setTitle("Title");
         response.setDescription("Description");
         response.setCompleted(true);
+        response.setPriority(TaskPriority.MEDIUM);
         response.setCategoryId(null);
 
         when(taskService.updateTask(eq(taskId), eq(task), eq(userId))).thenReturn(response);
@@ -221,6 +227,7 @@ public class TaskControllerTest {
                     .andExpect(jsonPath("$.title").value(task.getTitle()))
                     .andExpect(jsonPath("$.description").value(task.getDescription()))
                     .andExpect(jsonPath("$.completed").value(task.isCompleted()))
+                    .andExpect(jsonPath("$.priority").value(task.getPriority().toString()))
                     .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
 
         verify(taskService, times(1)).updateTask(eq(taskId), eq(task), eq(userId));
@@ -269,6 +276,7 @@ public class TaskControllerTest {
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task title");
         task.setDescription("");
+        task.setPriority(TaskPriority.LOW);
 
         when(taskService.updateTask(eq(taskId), eq(task), eq(userId)))
                 .thenThrow(new RuntimeException("You can only edit your own tasks"));
@@ -330,5 +338,25 @@ public class TaskControllerTest {
                 .with(user(principal)))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value("You can only delete your own tasks"));
+    }
+
+    @DisplayName("Get priorities (success)")
+    @Test
+    void getPrioritiesTest() throws Exception {
+        UserPrincipal principal = new UserPrincipal(new User(), List.of(new SimpleGrantedAuthority("USER")));
+
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/priorities")
+                .with(csrf())
+                .with(user(principal)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray());
+    }
+
+    @DisplayName("Get priorities (not authorized)")
+    @Test
+    void getPrioritiesNotAuthorized() throws Exception {
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/task/priorities")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
     }
 }

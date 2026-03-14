@@ -3,6 +3,7 @@ package lv.dainis.todoapp.service;
 import lv.dainis.todoapp.dao.TaskRepository;
 import lv.dainis.todoapp.entity.Category;
 import lv.dainis.todoapp.entity.Task;
+import lv.dainis.todoapp.entity.TaskPriority;
 import lv.dainis.todoapp.entity.User;
 import lv.dainis.todoapp.requestmodel.TaskRequestDTO;
 import lv.dainis.todoapp.responsemodel.TaskResponseDTO;
@@ -71,6 +72,7 @@ public class TaskServiceTest {
         TaskRequestDTO requestDTO = new TaskRequestDTO();
         requestDTO.setTitle("Test title");
         requestDTO.setDescription("Test description");
+        requestDTO.setPriority(TaskPriority.MEDIUM);
         requestDTO.setCategoryId(categoryId);
 
         User user = new User();
@@ -93,6 +95,7 @@ public class TaskServiceTest {
         assertEquals(createdId, createdTask.getId());
         assertEquals(requestDTO.getTitle(), createdTask.getTitle());
         assertEquals(requestDTO.getDescription(), createdTask.getDescription());
+        assertEquals(requestDTO.getPriority(), createdTask.getPriority());
         assertEquals(categoryId, createdTask.getCategoryId());
 
         verify(taskRepository).save(argThat(task ->
@@ -152,6 +155,7 @@ public class TaskServiceTest {
         existingTask.setTitle("Title before");
         existingTask.setDescription("Description before");
         existingTask.setCompleted(false);
+        existingTask.setPriority(TaskPriority.MEDIUM);
         existingTask.setUser(user);
         existingTask.setCategory(null);
 
@@ -159,6 +163,7 @@ public class TaskServiceTest {
         taskDetails.setTitle("Title after");
         taskDetails.setDescription("Description after");
         taskDetails.setCompleted(true);
+        taskDetails.setPriority(TaskPriority.HIGH);
         taskDetails.setCategoryId(categoryId);
 
         when(userService.findById(userId)).thenReturn(user);
@@ -177,6 +182,7 @@ public class TaskServiceTest {
         assertEquals("Title after", updatedTask.getTitle());
         assertEquals("Description after", updatedTask.getDescription());
         assertTrue(updatedTask.isCompleted());
+        assertEquals(TaskPriority.HIGH, updatedTask.getPriority());
         assertEquals(categoryId, updatedTask.getCategoryId());
 
         verify(taskRepository, times(1)).save(existingTask);
