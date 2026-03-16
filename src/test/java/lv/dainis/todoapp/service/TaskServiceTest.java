@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,6 +74,7 @@ public class TaskServiceTest {
         requestDTO.setTitle("Test title");
         requestDTO.setDescription("Test description");
         requestDTO.setPriority(TaskPriority.MEDIUM);
+        requestDTO.setDueDate(LocalDate.now().plusDays(7));
         requestDTO.setCategoryId(categoryId);
 
         User user = new User();
@@ -96,6 +98,7 @@ public class TaskServiceTest {
         assertEquals(requestDTO.getTitle(), createdTask.getTitle());
         assertEquals(requestDTO.getDescription(), createdTask.getDescription());
         assertEquals(requestDTO.getPriority(), createdTask.getPriority());
+        assertEquals(requestDTO.getDueDate(), createdTask.getDueDate());
         assertEquals(categoryId, createdTask.getCategoryId());
 
         verify(taskRepository).save(argThat(task ->
@@ -156,6 +159,7 @@ public class TaskServiceTest {
         existingTask.setDescription("Description before");
         existingTask.setCompleted(false);
         existingTask.setPriority(TaskPriority.MEDIUM);
+        existingTask.setDueDate(null);
         existingTask.setUser(user);
         existingTask.setCategory(null);
 
@@ -164,6 +168,7 @@ public class TaskServiceTest {
         taskDetails.setDescription("Description after");
         taskDetails.setCompleted(true);
         taskDetails.setPriority(TaskPriority.HIGH);
+        taskDetails.setDueDate(null);
         taskDetails.setCategoryId(categoryId);
 
         when(userService.findById(userId)).thenReturn(user);
@@ -183,6 +188,7 @@ public class TaskServiceTest {
         assertEquals("Description after", updatedTask.getDescription());
         assertTrue(updatedTask.isCompleted());
         assertEquals(TaskPriority.HIGH, updatedTask.getPriority());
+        assertNull(updatedTask.getDueDate());
         assertEquals(categoryId, updatedTask.getCategoryId());
 
         verify(taskRepository, times(1)).save(existingTask);

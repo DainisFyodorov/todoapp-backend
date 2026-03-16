@@ -1,9 +1,13 @@
 package lv.dainis.todoapp.requestmodel;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lv.dainis.todoapp.entity.TaskPriority;
+
+import java.time.LocalDate;
 
 @Data
 public class TaskRequestDTO {
@@ -20,6 +24,10 @@ public class TaskRequestDTO {
 
     @NotNull(message = "Priority cannot be null")
     private TaskPriority priority;
+
+    @Nullable
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate dueDate;
 
     private Long categoryId;
 

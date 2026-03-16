@@ -64,6 +64,7 @@ public class TaskService {
         task.setDescription(taskDetails.getDescription());
         task.setCompleted(taskDetails.isCompleted());
         task.setPriority(taskDetails.getPriority());
+        task.setDueDate(taskDetails.getDueDate());
         task.setCategory(category);
 
         return taskRepository.save(task).toDTO();

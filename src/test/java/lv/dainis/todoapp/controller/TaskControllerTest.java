@@ -22,6 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
@@ -129,10 +130,13 @@ public class TaskControllerTest {
 
         UserPrincipal principal = new UserPrincipal(user, List.of(new SimpleGrantedAuthority("USER")));
 
+        LocalDate dueDate = LocalDate.now().plusDays(7);
+
         TaskRequestDTO task = new TaskRequestDTO();
         task.setTitle("Task");
         task.setDescription("Description");
         task.setPriority(TaskPriority.MEDIUM);
+        task.setDueDate(dueDate);
         task.setCompleted(false);
         task.setCategoryId(null);
 
@@ -141,6 +145,7 @@ public class TaskControllerTest {
         responseDTO.setTitle("Task");
         responseDTO.setDescription("Description");
         responseDTO.setPriority(TaskPriority.MEDIUM);
+        responseDTO.setDueDate(dueDate);
         responseDTO.setCompleted(false);
         responseDTO.setCategoryId(null);
 
@@ -156,6 +161,7 @@ public class TaskControllerTest {
                     .andExpect(jsonPath("$.title").value(task.getTitle()))
                     .andExpect(jsonPath("$.description").value(task.getDescription()))
                     .andExpect(jsonPath("$.priority").value(task.getPriority().toString()))
+                    .andExpect(jsonPath("$.dueDate").value(dueDate.toString()))
                     .andExpect(jsonPath("$.completed").value(task.isCompleted()))
                     .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
     }
@@ -207,6 +213,7 @@ public class TaskControllerTest {
         task.setDescription("Description");
         task.setCompleted(true);
         task.setPriority(TaskPriority.MEDIUM);
+        task.setDueDate(LocalDate.now());
         task.setCategoryId(null);
 
         TaskResponseDTO response = new TaskResponseDTO();
@@ -214,6 +221,7 @@ public class TaskControllerTest {
         response.setDescription("Description");
         response.setCompleted(true);
         response.setPriority(TaskPriority.MEDIUM);
+        response.setDueDate(LocalDate.now());
         response.setCategoryId(null);
 
         when(taskService.updateTask(eq(taskId), eq(task), eq(userId))).thenReturn(response);
@@ -228,6 +236,7 @@ public class TaskControllerTest {
                     .andExpect(jsonPath("$.description").value(task.getDescription()))
                     .andExpect(jsonPath("$.completed").value(task.isCompleted()))
                     .andExpect(jsonPath("$.priority").value(task.getPriority().toString()))
+                    .andExpect(jsonPath("$.dueDate").value(LocalDate.now().toString()))
                     .andExpect(jsonPath("$.categoryId").value(task.getCategoryId()));
 
         verify(taskService, times(1)).updateTask(eq(taskId), eq(task), eq(userId));
